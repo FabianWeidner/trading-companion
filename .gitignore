@@ -21,3 +21,4 @@ Thumbs.db
 # Env/Secrets
 .env
 .env.*
+backend/backend/dev.db
