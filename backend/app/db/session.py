@@ -2,11 +2,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.settings import settings
 
-# Engine erzeugen
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args={"check_same_thread": False},  # wichtig für SQLite
-)
-
-# SessionLocal als Factory
+engine = create_engine(settings.DATABASE_URL, future=True, echo=False)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
