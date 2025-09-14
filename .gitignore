@@ -21,4 +21,19 @@ Thumbs.db
 # Env/Secrets
 .env
 .env.*
-backend/backend/dev.db
+
+# Databases
+*.db
+*.db-journal
+
+# Pytest / Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Alembic
+*.bak
+
+# Logs (optional)
+*.log
+logs/

@@ -1,0 +1,25 @@
+# Commit Message Guidelines (Conventional Commits angepasst)
+
+# Format:
+# <type>(scope): <short summary>
+# <leerzeile>
+# <detaillierte Beschreibung, optional>
+# <leerzeile>
+# <optional: Closes #issue>
+
+# Types:
+# feat      → neues Feature oder neue API-Routen
+# fix       → Bugfix
+# test      → Tests hinzufügen oder ändern
+# refactor  → Code-Umstrukturierung ohne neues Feature/Bugfix
+# docs      → Dokumentation
+# chore     → Configs, Dependencies, .gitignore, CI, pre-commit, etc.
+# style     → Formatierung, Whitespaces, Linting (kein Code-Verhalten geändert)
+# perf      → Performance-Verbesserungen
+
+# Beispiele:
+# feat(api): add endpoint for creating trades
+# fix(db): resolve migration conflict with trades table
+# test(trades): add API test for GET /trades endpoint
+# docs: update backend setup instructions
+# chore(pre-commit): enable auto stage after formatting
