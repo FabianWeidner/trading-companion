@@ -1,9 +1,8 @@
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
-
 from app.db.session import get_db
-from app import schemas, crud
+from app import crud, schemas, models
 
 router = APIRouter()
 
@@ -11,7 +10,11 @@ router = APIRouter()
 # CREATE
 @router.post("/", response_model=schemas.TradeRead)
 def create_trade(trade: schemas.TradeCreate, db: Session = Depends(get_db)):
-    return crud.trades.create_trade(db, trade)
+    db_trade = models.Trade(**trade.model_dump())  # ✅ Pydantic v2
+    db.add(db_trade)
+    db.commit()
+    db.refresh(db_trade)
+    return db_trade
 
 
 # READ all
