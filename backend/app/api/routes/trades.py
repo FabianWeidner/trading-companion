@@ -1,45 +1,28 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
-from app.db.session import get_db
-from app import crud, schemas, models
 import os
-from fastapi import UploadFile, File
-from fastapi.responses import JSONResponse
+import shutil
+from uuid import uuid4
+
+from app.db.session import get_db
+from app import crud, schemas
 
 router = APIRouter()
-
 
 UPLOAD_DIR = "backend/uploads/trades"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
-@router.post("/upload-screenshot/")
-async def upload_screenshot(file: UploadFile = File(...)):
-    file_location = os.path.join(UPLOAD_DIR, file.filename)
-    with open(file_location, "wb") as f:
-        f.write(await file.read())
-
-    return JSONResponse(content={"url": f"/uploads/trades/{file.filename}"})
-
-
-# CREATE
 @router.post("/", response_model=schemas.TradeRead)
 def create_trade(trade: schemas.TradeCreate, db: Session = Depends(get_db)):
-    db_trade = models.Trade(**trade.model_dump())  # ✅ Pydantic v2
-    db.add(db_trade)
-    db.commit()
-    db.refresh(db_trade)
-    return db_trade
+    return crud.trades.create_trade(db=db, trade_in=trade)
 
 
-# READ all
-@router.get("/", response_model=List[schemas.TradeRead])
+@router.get("/", response_model=list[schemas.TradeRead])
 def read_trades(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud.trades.get_trades(db, skip=skip, limit=limit)
 
 
-# READ one
 @router.get("/{trade_id}", response_model=schemas.TradeRead)
 def read_trade(trade_id: int, db: Session = Depends(get_db)):
     db_obj = crud.trades.get_trade(db, trade_id)
@@ -48,22 +31,45 @@ def read_trade(trade_id: int, db: Session = Depends(get_db)):
     return db_obj
 
 
-# UPDATE
 @router.put("/{trade_id}", response_model=schemas.TradeRead)
 def update_trade(
-    trade_id: int, trade_in: schemas.TradeUpdate, db: Session = Depends(get_db)
+    trade_id: int, trade: schemas.TradeUpdate, db: Session = Depends(get_db)
 ):
-    db_obj = crud.trades.get_trade(db, trade_id)
+    db_obj = crud.trades.update_trade(db=db, trade_id=trade_id, trade_in=trade)
     if not db_obj:
         raise HTTPException(status_code=404, detail="Trade not found")
-    return crud.trades.update_trade(db, db_obj, trade_in)
+    return db_obj
 
 
-# DELETE
-@router.delete("/{trade_id}")
+@router.delete("/{trade_id}", response_model=schemas.TradeRead)
 def delete_trade(trade_id: int, db: Session = Depends(get_db)):
-    db_obj = crud.trades.get_trade(db, trade_id)
+    db_obj = crud.trades.delete_trade(db=db, trade_id=trade_id)
     if not db_obj:
         raise HTTPException(status_code=404, detail="Trade not found")
-    crud.trades.delete_trade(db, db_obj)
-    return {"ok": True}
+    return db_obj
+
+
+@router.post("/{trade_id}/screenshot", response_model=schemas.TradeRead)
+def upload_trade_screenshot(
+    trade_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    trade = crud.trades.get_trade(db, trade_id)
+    if not trade:
+        raise HTTPException(status_code=404, detail="Trade not found")
+
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    ext = file.filename.split(".")[-1]
+    filename = f"trade_{trade_id}_{uuid4().hex}.{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    trade.screenshot_url = f"/uploads/{filename}"
+    db.commit()
+    db.refresh(trade)
+
+    return trade

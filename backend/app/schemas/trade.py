@@ -16,6 +16,8 @@ class TradeBase(BaseModel):
     qty: float = Field(..., gt=0, description="Quantity must be positive")
     price: float = Field(..., gt=0, description="Price must be positive")
     screenshot_url: Optional[str] = None
+    notes: Optional[str] = None
+    tags: Optional[str] = None
 
 
 class TradeCreate(TradeBase):
@@ -29,6 +31,8 @@ class TradeUpdate(BaseModel):
     qty: Optional[float] = Field(None, gt=0)
     price: Optional[float] = Field(None, gt=0)
     screenshot_url: Optional[str] = None
+    notes: Optional[str] = None
+    tags: Optional[str] = None
 
 
 class TradeRead(TradeBase):
