@@ -1,0 +1,15 @@
+-r requirements.txt
+
+# Testing
+pytest
+pytest-asyncio
+httpx
+
+# CLI & DB Migrations
+typer[all]
+alembic
+
+# Code Quality (optional, nice to have)
+black
+isort
+flake8
