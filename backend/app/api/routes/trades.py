@@ -3,8 +3,24 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app import crud, schemas, models
+import os
+from fastapi import UploadFile, File
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
+
+
+UPLOAD_DIR = "backend/uploads/trades"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+
+@router.post("/upload-screenshot/")
+async def upload_screenshot(file: UploadFile = File(...)):
+    file_location = os.path.join(UPLOAD_DIR, file.filename)
+    with open(file_location, "wb") as f:
+        f.write(await file.read())
+
+    return JSONResponse(content={"url": f"/uploads/trades/{file.filename}"})
 
 
 # CREATE
