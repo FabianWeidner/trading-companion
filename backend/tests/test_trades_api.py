@@ -18,26 +18,29 @@ def test_create_read_update_delete_trade():
         },
     )
     assert response.status_code == 200
-    trade = response.json()
-    trade_id = trade["id"]
+    data = response.json()
+    trade_id = data["id"]
 
     # READ
     response = client.get(f"/trades/{trade_id}")
     assert response.status_code == 200
-    assert response.json()["symbol"] == "AAPL"
+    data = response.json()
+    assert data["symbol"] == "AAPL"
 
     # UPDATE
     response = client.put(
         f"/trades/{trade_id}",
-        json={"qty": 2.0},
+        json={"strategy": "Reversal"},
     )
     assert response.status_code == 200
-    assert response.json()["qty"] == 2.0
+    data = response.json()
+    assert data["strategy"] == "Reversal"
 
     # DELETE
     response = client.delete(f"/trades/{trade_id}")
     assert response.status_code == 200
-    assert response.json()["ok"] is True
+    data = response.json()
+    assert data["ok"] is True
 
 
 def test_create_trade_with_invalid_qty():
@@ -51,7 +54,7 @@ def test_create_trade_with_invalid_qty():
             "price": 190.0,
         },
     )
-    assert response.status_code == 422  # Unprocessable Entity
+    assert response.status_code == 422
 
 
 def test_create_trade_with_invalid_side():
@@ -59,7 +62,7 @@ def test_create_trade_with_invalid_side():
         "/trades/",
         json={
             "symbol": "AAPL",
-            "side": "UP",  # invalid side, only LONG/SHORT allowed
+            "side": "INVALID",  # invalid
             "strategy": "Breakout",
             "qty": 1.0,
             "price": 190.0,
@@ -69,28 +72,76 @@ def test_create_trade_with_invalid_side():
 
 
 def test_get_nonexistent_trade():
-    response = client.get("/trades/99999")
+    response = client.get("/trades/999999")
     assert response.status_code == 404
 
 
 def test_delete_twice():
-    # create trade
+    # CREATE
     response = client.post(
         "/trades/",
         json={
-            "symbol": "MSFT",
-            "side": "SHORT",
-            "strategy": "Reversal",
+            "symbol": "TSLA",
+            "side": "LONG",
+            "strategy": "Scalping",
             "qty": 1.0,
-            "price": 300.0,
+            "price": 250.0,
         },
     )
     trade_id = response.json()["id"]
 
-    # delete once
+    # DELETE once
     response = client.delete(f"/trades/{trade_id}")
     assert response.status_code == 200
 
-    # delete again
+    # DELETE again
     response = client.delete(f"/trades/{trade_id}")
     assert response.status_code == 404
+
+
+def test_create_trade_with_zero_qty():
+    response = client.post(
+        "/trades/",
+        json={
+            "symbol": "AAPL",
+            "side": "LONG",
+            "strategy": "Breakout",
+            "qty": 0,  # invalid
+            "price": 190.0,
+        },
+    )
+    assert response.status_code == 422
+    assert "Quantity must be positive" in response.text
+
+
+def test_create_trade_with_zero_price():
+    response = client.post(
+        "/trades/",
+        json={
+            "symbol": "AAPL",
+            "side": "LONG",
+            "strategy": "Breakout",
+            "qty": 1.0,
+            "price": 0,  # invalid
+        },
+    )
+    assert response.status_code == 422
+    assert "Price must be positive" in response.text
+
+
+def test_create_trade_without_screenshot_url():
+    response = client.post(
+        "/trades/",
+        json={
+            "symbol": "AAPL",
+            "side": "SHORT",
+            "strategy": "Reversal",
+            "qty": 2.0,
+            "price": 150.0,
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["screenshot_url"] is None
+    assert data["side"] == "SHORT"
+    assert data["symbol"] == "AAPL"
