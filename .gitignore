@@ -33,7 +33,19 @@ htmlcov/
 
 # Alembic
 *.bak
+alembic.ini
+alembic/
 
-# Logs (optional)
+# Logs
 *.log
 logs/
+
+# Uploads (user files)
+uploads/
+
+# Cache
+.mypy_cache/
+ruff_cache/
+
+# Uploads (user files)
+uploads/
