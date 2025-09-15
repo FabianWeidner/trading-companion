@@ -1,14 +1,14 @@
-from datetime import datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field
 from typing import Optional
+from datetime import datetime
 
 
 class TradeBase(BaseModel):
     symbol: str
     side: str  # LONG / SHORT
     strategy: str
-    qty: float
-    price: float
+    qty: float = Field(..., gt=0, description="Quantity must be greater than 0")
+    price: float = Field(..., gt=0, description="Price must be greater than 0")
     screenshot_url: Optional[str] = None
 
 
@@ -20,8 +20,8 @@ class TradeUpdate(BaseModel):
     symbol: Optional[str] = None
     side: Optional[str] = None
     strategy: Optional[str] = None
-    qty: Optional[float] = None
-    price: Optional[float] = None
+    qty: Optional[float] = Field(None, gt=0)
+    price: Optional[float] = Field(None, gt=0)
     screenshot_url: Optional[str] = None
 
 
@@ -29,5 +29,5 @@ class TradeRead(TradeBase):
     id: int
     opened_at: datetime
 
-    # ⚠️ Neu für Pydantic V2
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
