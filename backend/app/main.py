@@ -1,16 +1,18 @@
 from fastapi import FastAPI
 from app.api.routes import api_router
-from app.db.session import engine
-from app.db.base import Base
+from app.db.init_db import init_db
 
 app = FastAPI(title="Trading Companion API")
 
 
-Base.metadata.create_all(bind=engine)
-
-app.include_router(api_router)
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
 
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+app.include_router(api_router)
