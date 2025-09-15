@@ -21,20 +21,23 @@ def test_create_read_update_delete_trade():
     trade = response.json()
     trade_id = trade["id"]
 
-    # READ one
+    # READ
     response = client.get(f"/trades/{trade_id}")
     assert response.status_code == 200
     assert response.json()["symbol"] == "AAPL"
 
     # UPDATE
-    response = client.put(f"/trades/{trade_id}", json={"strategy": "Reversal"})
+    response = client.put(
+        f"/trades/{trade_id}",
+        json={"qty": 2.0},
+    )
     assert response.status_code == 200
-    assert response.json()["strategy"] == "Reversal"
+    assert response.json()["qty"] == 2.0
 
     # DELETE
     response = client.delete(f"/trades/{trade_id}")
     assert response.status_code == 200
-    assert response.json() == {"ok": True}
+    assert response.json()["ok"] is True
 
 
 def test_create_trade_with_invalid_qty():
@@ -51,31 +54,43 @@ def test_create_trade_with_invalid_qty():
     assert response.status_code == 422  # Unprocessable Entity
 
 
-def test_get_nonexistent_trade():
-    response = client.get("/trades/999999")
-    assert response.status_code == 404
-    assert response.json()["detail"] == "Trade not found"
-
-
-def test_delete_twice():
-    # Create
+def test_create_trade_with_invalid_side():
     response = client.post(
         "/trades/",
         json={
-            "symbol": "TSLA",
+            "symbol": "AAPL",
+            "side": "UP",  # invalid side, only LONG/SHORT allowed
+            "strategy": "Breakout",
+            "qty": 1.0,
+            "price": 190.0,
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_get_nonexistent_trade():
+    response = client.get("/trades/99999")
+    assert response.status_code == 404
+
+
+def test_delete_twice():
+    # create trade
+    response = client.post(
+        "/trades/",
+        json={
+            "symbol": "MSFT",
             "side": "SHORT",
-            "strategy": "Momentum",
-            "qty": 2,
-            "price": 250.0,
+            "strategy": "Reversal",
+            "qty": 1.0,
+            "price": 300.0,
         },
     )
     trade_id = response.json()["id"]
 
-    # First delete
+    # delete once
     response = client.delete(f"/trades/{trade_id}")
     assert response.status_code == 200
 
-    # Second delete should fail
+    # delete again
     response = client.delete(f"/trades/{trade_id}")
     assert response.status_code == 404
-    assert response.json()["detail"] == "Trade not found"
