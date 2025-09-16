@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from enum import Enum
 
@@ -16,8 +16,6 @@ class TradeBase(BaseModel):
     qty: float = Field(..., gt=0, description="Quantity must be positive")
     price: float = Field(..., gt=0, description="Price must be positive")
     screenshot_url: Optional[str] = None
-    notes: Optional[str] = None
-    tags: Optional[str] = None
 
 
 class TradeCreate(TradeBase):
@@ -31,13 +29,22 @@ class TradeUpdate(BaseModel):
     qty: Optional[float] = Field(None, gt=0)
     price: Optional[float] = Field(None, gt=0)
     screenshot_url: Optional[str] = None
-    notes: Optional[str] = None
-    tags: Optional[str] = None
 
 
 class TradeRead(TradeBase):
     id: int
     opened_at: datetime
+    closed_at: Optional[datetime] = None
+    exit_price: Optional[float] = None
+    exit_reason: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TradeClose(BaseModel):
+    exit_price: float = Field(..., gt=0, description="Closing price must be positive")
+    exit_reason: Optional[str] = None
+
+
+class TradeDeleteResponse(BaseModel):
+    ok: bool

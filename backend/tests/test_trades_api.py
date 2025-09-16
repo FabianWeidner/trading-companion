@@ -99,7 +99,7 @@ def test_delete_twice():
     assert response.status_code == 404
 
 
-def test_create_trade_with_zero_qty():
+def test_create_trade_with_zero_qty(client):
     response = client.post(
         "/trades/",
         json={
@@ -111,10 +111,11 @@ def test_create_trade_with_zero_qty():
         },
     )
     assert response.status_code == 422
-    assert "Quantity must be positive" in response.text
+    body = response.json()
+    assert any(err["loc"][-1] == "qty" for err in body["detail"])
 
 
-def test_create_trade_with_zero_price():
+def test_create_trade_with_zero_price(client):
     response = client.post(
         "/trades/",
         json={
@@ -126,7 +127,8 @@ def test_create_trade_with_zero_price():
         },
     )
     assert response.status_code == 422
-    assert "Price must be positive" in response.text
+    body = response.json()
+    assert any(err["loc"][-1] == "price" for err in body["detail"])
 
 
 def test_create_trade_without_screenshot_url():
@@ -145,3 +147,36 @@ def test_create_trade_without_screenshot_url():
     assert data["screenshot_url"] is None
     assert data["side"] == "SHORT"
     assert data["symbol"] == "AAPL"
+
+
+def test_close_trade():
+    response = client.post(
+        "/trades/",
+        json={
+            "symbol": "AAPL",
+            "side": "LONG",
+            "strategy": "Breakout",
+            "qty": 1.0,
+            "price": 190.0,
+        },
+    )
+    assert response.status_code == 200
+    trade = response.json()
+    trade_id = trade["id"]
+
+    response = client.post(
+        f"/trades/{trade_id}/close", json={"exit_price": 195.0, "exit_reason": "Target"}
+    )
+    assert response.status_code == 200
+    closed_trade = response.json()
+
+    assert closed_trade["id"] == trade_id
+    assert closed_trade["exit_price"] == 195.0
+    assert closed_trade["exit_reason"] == "Target"
+    assert closed_trade["closed_at"] is not None
+
+    response = client.get(f"/trades/{trade_id}")
+    assert response.status_code == 200
+    trade_after = response.json()
+    assert trade_after["exit_price"] == 195.0
+    assert trade_after["closed_at"] is not None

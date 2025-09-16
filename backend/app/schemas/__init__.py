@@ -1,3 +1,17 @@
-from .trade import TradeBase, TradeCreate, TradeUpdate, TradeRead
+from .trade import (
+    TradeBase,
+    TradeCreate,
+    TradeUpdate,
+    TradeRead,
+    TradeClose,
+    TradeDeleteResponse,
+)
 
-__all__ = ["TradeBase", "TradeCreate", "TradeUpdate", "TradeRead"]
+__all__ = [
+    "TradeBase",
+    "TradeCreate",
+    "TradeUpdate",
+    "TradeRead",
+    "TradeClose",
+    "TradeDeleteResponse",
+]
