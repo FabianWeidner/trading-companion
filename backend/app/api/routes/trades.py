@@ -41,12 +41,12 @@ def update_trade(
     return db_obj
 
 
-@router.delete("/{trade_id}", response_model=schemas.TradeDeleteResponse)
+@router.delete("/{trade_id}", response_model=schemas.TradeRead)
 def delete_trade(trade_id: int, db: Session = Depends(get_db)):
-    deleted = crud.trades.delete_trade(db=db, trade_id=trade_id)
-    if not deleted:
+    db_obj = crud.trades.delete_trade(db=db, trade_id=trade_id)
+    if not db_obj:
         raise HTTPException(status_code=404, detail="Trade not found")
-    return schemas.TradeDeleteResponse(ok=True)
+    return db_obj
 
 
 @router.post("/{trade_id}/screenshot", response_model=schemas.TradeRead)

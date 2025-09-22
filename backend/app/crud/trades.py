@@ -32,12 +32,12 @@ def update_trade(db: Session, trade_id: int, trade_in: schemas.TradeUpdate):
 
 
 def delete_trade(db: Session, trade_id: int):
-    db_trade = get_trade(db, trade_id)
-    if not db_trade:
+    db_obj = db.query(models.Trade).filter(models.Trade.id == trade_id).first()
+    if not db_obj:
         return None
-    db.delete(db_trade)
+    db.delete(db_obj)
     db.commit()
-    return True
+    return db_obj
 
 
 def close_trade(

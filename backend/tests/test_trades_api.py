@@ -36,11 +36,12 @@ def test_create_read_update_delete_trade():
     data = response.json()
     assert data["strategy"] == "Reversal"
 
-    # DELETE
+    # DELETE (API gibt gelöschten Trade zurück)
     response = client.delete(f"/trades/{trade_id}")
     assert response.status_code == 200
     data = response.json()
-    assert data["ok"] is True
+    assert data["id"] == trade_id
+    assert data["symbol"] == "AAPL"
 
 
 def test_create_trade_with_invalid_qty():
@@ -99,7 +100,7 @@ def test_delete_twice():
     assert response.status_code == 404
 
 
-def test_create_trade_with_zero_qty(client):
+def test_create_trade_with_zero_qty():
     response = client.post(
         "/trades/",
         json={
@@ -115,7 +116,7 @@ def test_create_trade_with_zero_qty(client):
     assert any(err["loc"][-1] == "qty" for err in body["detail"])
 
 
-def test_create_trade_with_zero_price(client):
+def test_create_trade_with_zero_price():
     response = client.post(
         "/trades/",
         json={
@@ -175,6 +176,7 @@ def test_close_trade():
     assert closed_trade["exit_reason"] == "Target"
     assert closed_trade["closed_at"] is not None
 
+    # re-check via GET
     response = client.get(f"/trades/{trade_id}")
     assert response.status_code == 200
     trade_after = response.json()
